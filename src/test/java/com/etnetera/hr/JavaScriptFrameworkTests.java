@@ -14,13 +14,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.etnetera.hr.data.JavaScriptFramework;
 import com.etnetera.hr.repository.JavaScriptFrameworkRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 
 /**
@@ -32,10 +37,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-//@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class JavaScriptFrameworkTests {
 
-	@Autowired
+    @Autowired
 	private MockMvc mockMvc;
 	
 	private ObjectMapper mapper = new ObjectMapper();
@@ -64,8 +69,8 @@ public class JavaScriptFrameworkTests {
 	}
 	
 	@Test
-	public void addFrameworkInvalid() throws JsonProcessingException, Exception {
-		/*JavaScriptFramework framework = new JavaScriptFramework();
+	public void addFrameworkInvalid() throws Exception {
+		JavaScriptFramework framework = new JavaScriptFramework();
 		mockMvc.perform(post("/add").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework)))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.errors", hasSize(1)))
@@ -77,8 +82,46 @@ public class JavaScriptFrameworkTests {
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.errors", hasSize(1)))
 			.andExpect(jsonPath("$.errors[0].field", is("name")))
-			.andExpect(jsonPath("$.errors[0].message", is("Size")));*/
+			.andExpect(jsonPath("$.errors[0].message", is("Size")));
 		
 	}
+
+	@Test
+	public void addFramework() throws Exception {
+        JavaScriptFramework framework = new JavaScriptFramework();
+        framework.setName("hello world");
+        Date date = new Date();
+        framework.setDeprecationDate(date);
+        framework.setHypeLevel(60);
+        String [] arr = {"1.0", "2.1"};
+        framework.setVersion(arr);
+        mockMvc.perform(post("/add").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework)))
+                .andExpect(jsonPath("$.name", is("hello world")))
+                .andExpect(jsonPath("$.deprecationDate", is(new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(date))))
+                .andExpect(jsonPath("$.hypeLevel", is(60)))
+                .andExpect(jsonPath("$.version", hasSize(arr.length)))
+                .andExpect(jsonPath("$.version[0]", is(arr[0])))
+                .andExpect(jsonPath("$.version[1]", is(arr[1])));
+	}
+
+    @Test
+    public void deleteFramework() throws Exception {
+        JavaScriptFramework framework = new JavaScriptFramework("to delete");
+        framework = repository.save(framework);
+        mockMvc.perform(MockMvcRequestBuilders
+                .delete("/delete/{id}", framework.getId()).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework)));
+        assert !repository.findById(framework.getId()).isPresent();
+	}
+
+    @Test
+    public void updateFramework() throws Exception {
+        JavaScriptFramework framework = new JavaScriptFramework("to edit");
+        framework = repository.save(framework);
+        framework.setName("after editing");
+        mockMvc.perform((MockMvcRequestBuilders
+                .put("/update/{id}", framework.getId()).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework))))
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.name", is(framework.getName())));
+    }
 	
 }

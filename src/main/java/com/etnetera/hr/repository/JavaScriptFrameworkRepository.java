@@ -4,6 +4,8 @@ import org.springframework.data.repository.CrudRepository;
 
 import com.etnetera.hr.data.JavaScriptFramework;
 
+import java.util.Optional;
+
 /**
  * Spring data repository interface used for accessing the data in database.
  * 

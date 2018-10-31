@@ -1,10 +1,8 @@
 package com.etnetera.hr.data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import javax.persistence.*;
 import java.util.Date;
 
 /**
@@ -23,10 +21,11 @@ public class JavaScriptFramework {
 	@Column(nullable = false, length = 30)
 	private String name;
 
-	@Column()
+	@Column
     private String [] version;
 
-	@Column
+    @Temporal(TemporalType.DATE)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd.MM.yyyy")
     private Date deprecationDate;
 
 	@Column
@@ -55,13 +54,13 @@ public class JavaScriptFramework {
 		this.name = name;
 	}
 
-    public String[] getVersion() {
+    /*public String[] getVersion() {
         return version;
     }
 
     public void setVersion(String[] version) {
         this.version = version;
-    }
+    }*/
 
     public Date getDeprecationDate() {
         return deprecationDate;
@@ -84,4 +83,11 @@ public class JavaScriptFramework {
 		return "JavaScriptFramework [id=" + id + ", name=" + name + "]";
 	}
 
+    public String[] getVersion() {
+        return version;
+    }
+
+    public void setVersion(String[] version) {
+        this.version = version;
+    }
 }
