@@ -5,6 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import java.util.Date;
 
 /**
  * Simple data entity describing basic properties of every JavaScript framework.
@@ -21,6 +22,15 @@ public class JavaScriptFramework {
 
 	@Column(nullable = false, length = 30)
 	private String name;
+
+	@Column()
+    private String [] version;
+
+	@Column
+    private Date deprecationDate;
+
+	@Column
+	private Integer hypeLevel;
 
 	public JavaScriptFramework() {
 	}
@@ -43,6 +53,30 @@ public class JavaScriptFramework {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+    public String[] getVersion() {
+        return version;
+    }
+
+    public void setVersion(String[] version) {
+        this.version = version;
+    }
+
+    public Date getDeprecationDate() {
+        return deprecationDate;
+    }
+
+    public void setDeprecationDate(Date deprecationDate) {
+        this.deprecationDate = deprecationDate;
+    }
+
+	public Integer getHypeLevel() {
+		return hypeLevel;
+	}
+
+	public void setHypeLevel(Integer hypeLevel) {
+		this.hypeLevel = hypeLevel;
 	}
 
 	@Override
