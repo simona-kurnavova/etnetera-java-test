@@ -48,7 +48,7 @@ public class JavaScriptFrameworkTests {
 	@Autowired
 	private JavaScriptFrameworkRepository repository;
 
-	private void prepareData() throws Exception {
+	private void prepareData() {
 		JavaScriptFramework react = new JavaScriptFramework("ReactJS");
 		JavaScriptFramework vue = new JavaScriptFramework("Vue.js");
 		
@@ -59,7 +59,6 @@ public class JavaScriptFrameworkTests {
 	@Test
 	public void frameworksTest() throws Exception {
 		prepareData();
-
 		mockMvc.perform(get("/frameworks")).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(jsonPath("$", hasSize(2)))
 				.andExpect(jsonPath("$[0].id", is(1)))
@@ -88,13 +87,14 @@ public class JavaScriptFrameworkTests {
 
 	@Test
 	public void addFramework() throws Exception {
-        JavaScriptFramework framework = new JavaScriptFramework();
-        framework.setName("hello world");
         Date date = new Date();
+        String [] arr = {"1.0", "2.1"};
+
+        JavaScriptFramework framework = new JavaScriptFramework("hello world");
         framework.setDeprecationDate(date);
         framework.setHypeLevel(60);
-        String [] arr = {"1.0", "2.1"};
         framework.setVersion(arr);
+
         mockMvc.perform(post("/add").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework)))
                 .andExpect(jsonPath("$.name", is("hello world")))
                 .andExpect(jsonPath("$.deprecationDate", is(new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(date))))
@@ -108,8 +108,9 @@ public class JavaScriptFrameworkTests {
     public void deleteFramework() throws Exception {
         JavaScriptFramework framework = new JavaScriptFramework("to delete");
         framework = repository.save(framework);
-        mockMvc.perform(MockMvcRequestBuilders
-                .delete("/delete/{id}", framework.getId()).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework)));
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/delete/{id}",
+                framework.getId()).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework)));
         assert !repository.findById(framework.getId()).isPresent();
 	}
 
@@ -118,10 +119,47 @@ public class JavaScriptFrameworkTests {
         JavaScriptFramework framework = new JavaScriptFramework("to edit");
         framework = repository.save(framework);
         framework.setName("after editing");
-        mockMvc.perform((MockMvcRequestBuilders
-                .put("/update/{id}", framework.getId()).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework))))
+
+        mockMvc.perform((MockMvcRequestBuilders.put("/update/{id}",
+                 framework.getId()).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework))))
                 .andExpect(jsonPath("$.id", is(1)))
                 .andExpect(jsonPath("$.name", is(framework.getName())));
+    }
+
+    @Test
+    public void updateFrameworkInvalid() throws Exception {
+        JavaScriptFramework framework = new JavaScriptFramework("to edit");
+        framework = repository.save(framework);
+        framework.setName("verylongnameofthejavascriptframeworkjavaisthebest");
+
+        mockMvc.perform((MockMvcRequestBuilders.put("/update/{id}",
+                framework.getId()).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors", hasSize(1)))
+                .andExpect(jsonPath("$.errors[0].field", is("name")))
+                .andExpect(jsonPath("$.errors[0].message", is("Size")));
+    }
+
+    @Test
+    public void retrieveFramework() throws Exception {
+        JavaScriptFramework framework = new JavaScriptFramework("test");
+        framework.setHypeLevel(3);
+        framework = repository.save(framework);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/framework/{id}",
+                framework.getId()).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework)))
+                .andExpect(jsonPath("$.name", is(framework.getName())))
+                .andExpect(jsonPath("$.hypeLevel", is(framework.getHypeLevel())));
+    }
+
+    @Test
+    public void retrieveFrameworkInvalid() throws Exception {
+        JavaScriptFramework framework = new JavaScriptFramework("test");
+        framework = repository.save(framework);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/framework/{id}", 100)
+                .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(framework)))
+            .andExpect(status().isNoContent());
     }
 	
 }

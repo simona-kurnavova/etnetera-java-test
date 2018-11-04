@@ -1,15 +1,19 @@
 package com.etnetera.hr.controller;
 
+import com.etnetera.hr.rest.Errors;
+import com.etnetera.hr.rest.ValidationError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.etnetera.hr.data.JavaScriptFramework;
 import com.etnetera.hr.repository.JavaScriptFrameworkRepository;
 
-import java.util.Optional;
+import javax.validation.*;
+import java.util.*;
 
 /**
  * Simple REST controller for accessing application logic.
@@ -17,15 +21,19 @@ import java.util.Optional;
  * @author Etnetera
  *
  */
+@Validated
 @RestController
 public class JavaScriptFrameworkController extends EtnRestController {
 
 	private final JavaScriptFrameworkRepository repository;
 
+    private final Validator validator;
+
 	@Autowired
-	public JavaScriptFrameworkController(JavaScriptFrameworkRepository repository) {
+	public JavaScriptFrameworkController(JavaScriptFrameworkRepository repository, Validator validator) {
 		this.repository = repository;
-	}
+        this.validator = validator;
+    }
 
 	@GetMapping("/frameworks")
 	public Iterable<JavaScriptFramework> frameworks() {
@@ -33,16 +41,11 @@ public class JavaScriptFrameworkController extends EtnRestController {
 	}
 
 	@PostMapping("/add")
-	public ResponseEntity<Object> add(@RequestBody JavaScriptFramework javaScriptFramework) {
-        JavaScriptFramework js = null;
-
-        try {
-            js = repository.save(javaScriptFramework);
-        }
-        catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-        return ResponseEntity.ok(js);
+	public ResponseEntity<?> add(@RequestBody JavaScriptFramework javaScriptFramework) {
+        Errors error = validateEntity(javaScriptFramework);
+        if(error != null)
+            return new ResponseEntity<>(error, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+        return ResponseEntity.ok(repository.save(javaScriptFramework));
 	}
 
     @DeleteMapping("delete/{id}")
@@ -52,13 +55,40 @@ public class JavaScriptFrameworkController extends EtnRestController {
 
 
     @PutMapping("update/{id}")
-    public JavaScriptFramework update(@PathVariable Long id, @RequestBody JavaScriptFramework javaScriptFramework) {
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody JavaScriptFramework javaScriptFramework) {
+        Errors error = validateEntity(javaScriptFramework);
+        if(error != null)
+            return new ResponseEntity<>(error, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+
         Optional<JavaScriptFramework> framework = repository.findById(id);
         if(framework.isPresent()) {
             javaScriptFramework.setId(framework.get().getId());
-            repository.save(javaScriptFramework);
+            javaScriptFramework = repository.save(javaScriptFramework);
+            return ResponseEntity.ok(javaScriptFramework);
         }
-        return framework.orElse(null);
+        return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("framework/{id}")
+    public ResponseEntity<?> retrieve(@PathVariable Long id) {
+        Optional<JavaScriptFramework> framework = repository.findById(id);
+        if(framework.isPresent())
+            return ResponseEntity.ok(framework);
+        else return ResponseEntity.noContent().build();
+	}
+
+    private Errors validateEntity(JavaScriptFramework javaScriptFramework) {
+        Errors error = null;
+        Set<ConstraintViolation<JavaScriptFramework>> violations = validator.validate(javaScriptFramework);
+
+        if(!violations.isEmpty()) {
+            List<ValidationError> validationErrors = new ArrayList<>();
+            for (ConstraintViolation<JavaScriptFramework> v : violations) {
+                validationErrors.add(new ValidationError(v.getPropertyPath().toString(),
+                        v.getConstraintDescriptor().getAnnotation().annotationType().getSimpleName()));
+            }
+            error = new Errors(validationErrors);
+        }
+        return error;
+    }
 }

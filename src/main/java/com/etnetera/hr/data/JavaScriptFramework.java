@@ -3,6 +3,8 @@ package com.etnetera.hr.data;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.util.Date;
 
 /**
@@ -19,6 +21,8 @@ public class JavaScriptFramework {
 	private Long id;
 
 	@Column(nullable = false, length = 30)
+	@NotEmpty
+    @Size(max = 30)
 	private String name;
 
 	@Column
@@ -54,14 +58,6 @@ public class JavaScriptFramework {
 		this.name = name;
 	}
 
-    /*public String[] getVersion() {
-        return version;
-    }
-
-    public void setVersion(String[] version) {
-        this.version = version;
-    }*/
-
     public Date getDeprecationDate() {
         return deprecationDate;
     }
@@ -78,16 +74,16 @@ public class JavaScriptFramework {
 		this.hypeLevel = hypeLevel;
 	}
 
-	@Override
-	public String toString() {
-		return "JavaScriptFramework [id=" + id + ", name=" + name + "]";
-	}
-
     public String[] getVersion() {
         return version;
     }
 
     public void setVersion(String[] version) {
         this.version = version;
+    }
+
+    @Override
+    public String toString() {
+        return "JavaScriptFramework [id=" + id + ", name=" + name + "]";
     }
 }

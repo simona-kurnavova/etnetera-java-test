@@ -13,6 +13,14 @@ public class Errors {
 
 	private List<ValidationError> errors;
 
+	public Errors() {
+
+	}
+
+	public Errors(List<ValidationError> errors) {
+		setErrors(errors);
+	}
+
 	public List<ValidationError> getErrors() {
 		return errors;
 	}
